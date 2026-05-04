@@ -8,7 +8,7 @@ const Landing = () => {
             <header className="hero" style={{ padding: '120px 0 80px', textAlign: 'center' }}>
                 <div className="container">
                     <h1 style={{ fontSize: '4rem', marginBottom: '24px', background: 'var(--accent-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                        API-Driven Workflow Excellence
+                        Binjwa Solution: Workflow Excellence
                     </h1>
                     <p style={{ fontSize: '1.25rem', color: 'var(--text-secondary)', maxWidth: '700px', margin: '0 auto 40px' }}>
                         Secure authentication, dynamic role-based qualification, and real-time insights for your enterprise ecosystem.

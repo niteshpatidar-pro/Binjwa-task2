@@ -12,6 +12,7 @@ const swaggerJsdoc = require('swagger-jsdoc');
 const authRoutes = require('./routes/auth.routes');
 const accessRoutes = require('./routes/access.routes');
 const adminRoutes = require('./routes/admin.routes');
+const rbacRoutes = require('./routes/rbac.routes');
 require('./config/passport');
 
 const app = express();
@@ -58,6 +59,7 @@ mongoose.connect(process.env.MONGODB_URI)
 app.use('/api/auth', authRoutes);
 app.use('/api/access', accessRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/rbac', rbacRoutes);
 
 // Health Check
 app.get('/health', (req, res) => {

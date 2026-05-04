@@ -2,6 +2,15 @@ const AccessRequest = require('../models/AccessRequest');
 const User = require('../models/User');
 const AuditLog = require('../models/AuditLog');
 
+exports.getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find().select('-password').populate('roles');
+        res.json({ success: true, users });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 exports.getAllRequests = async (req, res) => {
     try {
         const { status, role, search } = req.query;
@@ -52,7 +61,7 @@ exports.updateRequestStatus = async (req, res) => {
         // Log action
         await AuditLog.create({
             action: `REQUEST_${status}`,
-            actor: req.user.id,
+            actor: req.user._id,
             targetType: 'AccessRequest',
             targetId: request._id,
             details: { status, adminComments }

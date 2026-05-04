@@ -16,7 +16,7 @@ const Navbar = () => {
         <nav className="glass" style={{ margin: '20px', padding: '16px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: '20px', zIndex: 100 }}>
             <Link to="/" style={{ fontSize: '1.5rem', fontWeight: '800', textDecoration: 'none', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{ width: '32px', height: '32px', background: 'var(--accent-gradient)', borderRadius: '8px' }}></div>
-                FLOWSYSTEM
+                BINJWA SOLUTION
             </Link>
 
             <div className="flex" style={{ alignItems: 'center', gap: '24px' }}>
@@ -37,6 +37,9 @@ const Navbar = () => {
                                 </Link>
                                 <Link to="/admin/logs" style={{ color: 'var(--text-secondary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <History size={18} /> Logs
+                                </Link>
+                                <Link to="/admin/rbac" style={{ color: 'var(--text-secondary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <Shield size={18} /> RBAC
                                 </Link>
                             </>
                         )}

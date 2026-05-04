@@ -1,8 +1,10 @@
 const User = require('../models/User');
 const OTP = require('../models/OTP');
 const { generateAccessToken, generateRefreshToken } = require('../utils/token.utils');
-const { sendOTPEmail } = require('../utils/email.utils');
+const { sendOTPEmail, sendPasswordResetEmail } = require('../utils/email.utils');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 
 exports.sendRegistrationOTP = async (req, res) => {
     try {
@@ -22,8 +24,10 @@ exports.sendRegistrationOTP = async (req, res) => {
             { upsert: true, new: true }
         );
 
-        // Send OTP via Email
-        await sendOTPEmail(email, otp);
+        // Send OTP via Email asynchronously (fire and forget)
+        sendOTPEmail(email, otp).catch(error => {
+            console.error('[BACKGROUND EMAIL ERROR] Failed to send OTP email:', error);
+        });
 
         res.json({
             success: true,
@@ -79,11 +83,21 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
-        const user = await User.findOne({ email });
+        const lowercaseEmail = email.toLowerCase();
+        const user = await User.findOne({ email: lowercaseEmail });
 
-        if (!user || !(await user.comparePassword(password))) {
+        if (!user) {
+            console.log(`[LOGIN] User not found: ${lowercaseEmail}`);
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
+
+        const isMatch = await user.comparePassword(password);
+        if (!isMatch) {
+            console.log(`[LOGIN] Password mismatch for: ${lowercaseEmail}`);
+            return res.status(401).json({ success: false, message: 'Invalid credentials' });
+        }
+
+        console.log(`[LOGIN] Success for: ${lowercaseEmail}`);
 
         const accessToken = generateAccessToken(user);
         const refreshToken = generateRefreshToken(user);
@@ -233,5 +247,73 @@ exports.googleCallback = async (req, res) => {
     } catch (error) {
         console.error('Google OAuth Callback Error:', error);
         res.redirect(`${process.env.FRONTEND_URL}/login?error=OAuthFailed`);
+    }
+};
+
+exports.forgotPassword = async (req, res) => {
+    try {
+        const email = req.body.email.toLowerCase();
+        const user = await User.findOne({ email });
+
+        if (!user || user.googleId) {
+            console.log(`[DEBUG] Forgot Password failed: ${!user ? 'User not found' : 'User is a Google account'} (${email})`);
+            // Even if user doesn't exist or is a Google user, return success to prevent user enumeration
+            return res.json({ success: true, message: 'If that email address is in our database, we will send you an email to reset your password.' });
+        }
+
+        // Generate a random token
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        
+        // Hash token before saving to db
+        const passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+        
+        user.resetPasswordToken = passwordResetToken;
+        user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
+        
+        await user.save({ validateBeforeSave: false });
+
+        // Send email
+        const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+        console.log(`[DEBUG] Password Reset Link: ${resetUrl}`);
+        // Send email asynchronously (fire and forget)
+        sendPasswordResetEmail(user.email, resetUrl).catch(async (error) => {
+            console.error('[BACKGROUND EMAIL ERROR] Failed to send password reset email:', error);
+            // Optionally, we could clean up the token here if we wanted
+            user.resetPasswordToken = undefined;
+            user.resetPasswordExpires = undefined;
+            await user.save({ validateBeforeSave: false }).catch(e => console.error('Failed to cleanup token:', e));
+        });
+
+        res.json({ success: true, message: 'If that email address is in our database, we will send you an email to reset your password.' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.resetPassword = async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+
+        // Hash the incoming token to compare with the one in database
+        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+        const user = await User.findOne({
+            resetPasswordToken: hashedToken,
+            resetPasswordExpires: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({ success: false, message: 'Token is invalid or has expired' });
+        }
+
+        user.password = newPassword;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+
+        await user.save();
+
+        res.json({ success: true, message: 'Password reset successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
 };

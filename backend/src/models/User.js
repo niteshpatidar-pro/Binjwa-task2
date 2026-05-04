@@ -6,6 +6,11 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: function() { return !this.googleId; } },
     mobile: { type: String },
+    roles: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Role'
+    }],
+    // Keep 'role' string temporarily for backward compatibility during migration
     role: { 
         type: String, 
         enum: ['User', 'Investor', 'Founder', 'Partner', 'Admin'], 
@@ -25,6 +30,8 @@ const userSchema = new mongoose.Schema({
         code: String,
         expiresAt: Date
     },
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
     refreshTokens: [String],
     lastLogin: Date,
     sessions: [{

@@ -151,15 +151,26 @@ const Register = () => {
                             {loading ? <Loader2 className="animate-spin" /> : 'Verify & Create Account'}
                         </button>
                         
-                        <button 
-                            type="button" 
-                            className="btn" 
-                            style={{ width: '100%', marginTop: '12px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }} 
-                            onClick={() => setOtpSent(false)}
-                            disabled={loading}
-                        >
-                            Back to Registration
-                        </button>
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                            <button 
+                                type="button" 
+                                className="btn" 
+                                style={{ flex: 1, background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }} 
+                                onClick={() => setOtpSent(false)}
+                                disabled={loading}
+                            >
+                                Back
+                            </button>
+                            <button 
+                                type="button" 
+                                className="btn" 
+                                style={{ flex: 1, background: 'var(--accent-primary)', color: 'white' }} 
+                                onClick={handleSubmit}
+                                disabled={loading}
+                            >
+                                {loading ? <Loader2 className="animate-spin" /> : 'Resend OTP'}
+                            </button>
+                        </div>
                     </form>
                 )}
 
